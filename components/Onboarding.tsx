@@ -4,8 +4,10 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
-
-export default function Onboarding() {
+interface OnboardingProps {
+onSuccess?: () => void;
+}
+export default function Onboarding({ onSuccess }: OnboardingProps) {
   const supabase = createClientComponentClient();
   const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
