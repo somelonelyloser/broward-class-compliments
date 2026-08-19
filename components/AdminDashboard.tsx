@@ -10,7 +10,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [requireIdVerification, setRequireIdVerification] = useState(false);
-  const [feedbackQueue, setFeedbackQueue] = useState([]);
+  const [feedbackQueue, setFeedbackQueue] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
