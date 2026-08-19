@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import Onboarding from "@/components/Onboarding";
+import Onboarding from "../components/Onboarding";
 
 export default function Home() {
   const supabase = createClientComponentClient();
