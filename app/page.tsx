@@ -1,59 +1,97 @@
-
 "use client";
 
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useEffect, useState } from "react";
-import { Session } from "@supabase/supabase-js";
-export default function LoginPage() {
+import Onboarding from "@/components/Onboarding";
+
+export default function Home() {
   const supabase = createClientComponentClient();
-const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    async function loadUserData() {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
-    });
 
-   const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      if (session?.user) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+
+        setProfile(data);
+      }
+      setLoading(false);
+    }
+
+    loadUserData();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
+        if (session?.user) {
+          supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", session.user.id)
+            .single()
+            .then(({ data }) => setProfile(data));
+        } else {
+          setProfile(null);
+        }
       }
     );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase.auth]);
+  }, [supabase]);
+
+  if (loading) return <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">Loading...</div>;
 
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="max-w-md w-full p-8 bg-gray-800 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold text-white text-center mb-6">Login</h2>
-          <Auth
-            supabaseClient={supabase}
-            appearance={{ theme: ThemeSupa }}
-            providers={["google"]}
-            redirectTo="http://localhost:3000/dashboard"
-          />
-        </div>
-      </div>
-    );
-  } else {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <h2 className="text-2xl font-bold text-white text-center mb-6">Welcome!</h2>
+      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center">
+        <h1 className="text-3xl font-bold mb-4">Broward Class Compliments</h1>
         <button
-          onClick={async () => {
-            await supabase.auth.signOut();
-            setSession(null);
-          }}
-          className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+          onClick={() => supabase.auth.signInWithOAuth({ provider: "google" })}
+          className="bg-blue-600 px-4 py-2 rounded font-semibold"
         >
-          Logout
+          Sign in with Google
         </button>
       </div>
     );
   }
+
+  // Check if profile is missing first/last name, grade, or high school
+  const needsOnboarding =
+    !profile ||
+    !profile.first_name ||
+    !profile.last_name ||
+    !profile.grade ||
+    !profile.high_school;
+
+  if (needsOnboarding) {
+    return <Onboarding onComplete={() => window.location.reload()} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center gap-4">
+      <h1 className="text-2xl font-bold">
+        Welcome, {profile.first_name} {profile.last_name}!
+      </h1>
+      <p className="text-gray-400">
+        {profile.high_school} • Grade {profile.grade}
+      </p>
+      <button
+        onClick={() => supabase.auth.signOut()}
+        className="bg-red-600 px-4 py-2 rounded"
+      >
+        Logout
+      </button>
+    </div>
+  );
 }
