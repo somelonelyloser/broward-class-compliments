@@ -75,7 +75,7 @@ export default function Home() {
     !profile.high_school;
 
   if (needsOnboarding) {
-    return <Onboarding onComplete={() => window.location.reload()} />;
+    return <Onboarding user={session.user} />;
   }
 
   return (
