@@ -15,14 +15,14 @@ const [session, setSession] = useState<Session | null>(null);
       setSession(session);
     });
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+   const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
         setSession(session);
       }
     );
 
     return () => {
-      authListener.unsubscribe();
+      subscription.unsubscribe();
     };
   }, [supabase.auth]);
 
