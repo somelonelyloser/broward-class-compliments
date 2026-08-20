@@ -1,187 +1,102 @@
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/navigation";
-interface OnboardingProps {
-onSuccess?: () => void;
-}
-export default function Onboarding({ onSuccess }: OnboardingProps) {
+
+export default function Onboarding() {
   const supabase = createClientComponentClient();
-  const router = useRouter();
-  const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [grade, setGrade] = useState("");
-  const [schoolId, setSchoolId] = useState("");
-  const [username, setUsername] = useState("");
-  const [schools, setSchools] = useState<any[]>([]);
-  const [requireIdVerification, setRequireIdVerification] = useState(false);
+  const [highSchool, setHighSchool] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    async function fetchProfile() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/");
-        return;
-      }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-      const { data, error } = await supabase
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session?.user) {
+      const { error } = await supabase
         .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+        .upsert({
+          id: session.user.id,
+          first_name: firstName,
+          last_name: lastName,
+          grade: grade,
+          high_school: highSchool,
+          updated_at: new Date().toISOString(),
+        });
 
       if (error) {
-        console.error("Error fetching profile:", error);
-      } else if (data) {
-        setProfile(data);
-        setFullName(data.full_name || "");
-        setGrade(data.grade || "");
-        setSchoolId(data.school_id || "");
-        setUsername(data.username || "");
-      }
-      setLoading(false);
-    }
-
-    async function fetchSchools() {
-      // This would ideally fetch from a "schools" table in Supabase
-      // For now, a placeholder array
-      setSchools([
-        { id: "1", name: "Pompano Beach High School" },
-        { id: "2", name: "Blanche Ely High School" },
-        { id: "3", name: "Fort Lauderdale High School" },
-      ]);
-    }
-
-    async function fetchAppSettings() {
-      const { data, error } = await supabase
-        .from("app_settings")
-        .select("require_id_verification")
-        .single();
-
-      if (error) {
-        console.error("Error fetching app settings:", error);
-      } else if (data) {
-        setRequireIdVerification(data.require_id_verification);
+        alert("Error saving profile: " + error.message);
+      } else {
+        window.location.reload();
       }
     }
-
-    fetchProfile();
-    fetchSchools();
-    fetchAppSettings();
-  }, [supabase, router]);
-
-  const handleSaveProfile = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        full_name: fullName,
-        grade: grade,
-        school_id: schoolId,
-        username: username,
-      })
-      .eq("id", user.id);
-
-    if (error) {
-      console.error("Error updating profile:", error);
-    } else {
-      alert("Profile updated successfully!");
-      // Redirect to dashboard or home page after onboarding
-      router.push("/dashboard");
-    }
+    setLoading(false);
   };
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">Loading...</div>;
-  }
-
-  if (profile && profile.username && (!requireIdVerification || profile.verification_status === "approved")) {
-    // If profile is complete and ID verification is not required or approved, redirect to dashboard
-    router.push("/dashboard");
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
-      <h1 className="text-3xl font-bold mb-8">Complete Your Profile</h1>
-
-      <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
-        <div className="mb-4">
-          <label htmlFor="fullName" className="block text-sm font-medium text-gray-300">Full Name</label>
+    <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-950 to-slate-950">
+      <form 
+        onSubmit={handleSubmit} 
+        className="relative bg-slate-900/80 backdrop-blur-xl border border-indigo-500/30 p-8 rounded-3xl w-full max-w-md flex flex-col gap-5 shadow-[0_0_50px_-12px_rgba(99,102,241,0.25)]"
+      >
+        <div className="text-center space-y-1">
+          <h2 className="text-3xl font-extrabold bg-gradient-to-r from-cyan-400 via-indigo-400 to-pink-500 bg-clip-text text-transparent">
+            Setup Your Profile
+          </h2>
+          <p className="text-slate-400 text-sm">Enter your details to join your school feed</p>
+        </div>
+        
+        <div className="space-y-3 mt-2">
           <input
             type="text"
-            id="fullName"
-            className="mt-1 block w-full p-2 rounded-md bg-gray-700 border-gray-600 text-white"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            placeholder="First Name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+            className="w-full p-3 rounded-xl bg-slate-800/80 text-white border border-slate-700/80 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none transition-all placeholder:text-slate-500"
           />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="username" className="block text-sm font-medium text-gray-300">Username</label>
+          
           <input
             type="text"
-            id="username"
-            className="mt-1 block w-full p-2 rounded-md bg-gray-700 border-gray-600 text-white"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Last Name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+            className="w-full p-3 rounded-xl bg-slate-800/80 text-white border border-slate-700/80 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none transition-all placeholder:text-slate-500"
           />
-        </div>
 
-        <div className="mb-4">
-          <label htmlFor="grade" className="block text-sm font-medium text-gray-300">Grade</label>
-          <select
-            id="grade"
-            className="mt-1 block w-full p-2 rounded-md bg-gray-700 border-gray-600 text-white"
+          <input
+            type="text"
+            placeholder="Grade (e.g. 10)"
             value={grade}
             onChange={(e) => setGrade(e.target.value)}
-          >
-            <option value="">Select Grade</option>
-            <option value="9">9th Grade</option>
-            <option value="10">10th Grade</option>
-            <option value="11">11th Grade</option>
-            <option value="12">12th Grade</option>
-          </select>
-        </div>
+            required
+            className="w-full p-3 rounded-xl bg-slate-800/80 text-white border border-slate-700/80 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none transition-all placeholder:text-slate-500"
+          />
 
-        <div className="mb-4">
-          <label htmlFor="school" className="block text-sm font-medium text-gray-300">High School</label>
-          <select
-            id="school"
-            className="mt-1 block w-full p-2 rounded-md bg-gray-700 border-gray-600 text-white"
-            value={schoolId}
-            onChange={(e) => setSchoolId(e.target.value)}
-          >
-            <option value="">Select School</option>
-            {schools.map((school) => (
-              <option key={school.id} value={school.id}>
-                {school.name}
-              </option>
-            ))}
-          </select>
+          <input
+            type="text"
+            placeholder="High School"
+            value={highSchool}
+            onChange={(e) => setHighSchool(e.target.value)}
+            required
+            className="w-full p-3 rounded-xl bg-slate-800/80 text-white border border-slate-700/80 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none transition-all placeholder:text-slate-500"
+          />
         </div>
-
-        {requireIdVerification && profile?.verification_status !== "approved" && (
-          <div className="mb-4 p-4 bg-yellow-800 rounded-md">
-            <p className="text-yellow-200">ID Verification Required:</p>
-            <p className="text-yellow-200 text-sm">Please upload a photo of your student ID to continue using interactive features.</p>
-            {/* Placeholder for ID upload component */}
-            <button className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Upload ID</button>
-          </div>
-        )}
 
         <button
-          onClick={handleSaveProfile}
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+          type="submit"
+          disabled={loading}
+          className="mt-2 w-full py-3 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-95 shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all active:scale-[0.98]"
         >
-          Save Profile
+          {loading ? "Saving..." : "Get Started →"}
         </button>
-      </div>
+      </form>
     </div>
   );
 }
