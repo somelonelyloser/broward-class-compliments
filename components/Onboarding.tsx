@@ -5,7 +5,11 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 type Step = 1 | 2 | 3 | 4;
 
-export default function Onboarding() {
+interface OnboardingProps {
+  onSuccess?: () => void;
+}
+
+export default function Onboarding({ onSuccess }: OnboardingProps) {
   const supabase = createClientComponentClient();
   const [step, setStep] = useState<Step>(1);
 
@@ -112,7 +116,11 @@ export default function Onboarding() {
       setErrorMsg(profileError.message);
       setLoading(false);
     } else {
-      window.location.reload();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        window.location.reload();
+      }
     }
   };
 
