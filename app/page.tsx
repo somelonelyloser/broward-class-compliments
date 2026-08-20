@@ -305,10 +305,11 @@ export default function Home() {
         {/* Top Profile & Aura Bar */}
         <header className="flex justify-between items-center bg-slate-900 border border-indigo-500/30 p-4 rounded-2xl">
           <div className="flex items-center gap-3">
-            <AvatarSelector
-              currentAvatar={profile.avatar_url || "https://api.dicebear.com/7.x/bottts/svg?seed=default"}
-              onSelectAvatar={handleAvatarChange}
-            />
+           <AvatarSelector
+  currentAvatar={profile.avatar_url || "https://api.dicebear.com/7.x/bottts/svg?seed=default"}
+  userId={profile.id}
+  onSelectAvatar={handleAvatarChange}
+/>
             <div>
               <h1 className="font-bold text-sm sm:text-base">{profile.first_name} {profile.last_name}</h1>
               <p className="text-xs text-slate-400">@{profile.username} • {profile.gender === "boy" ? "👦 Boy" : "👧 Girl"}</p>
