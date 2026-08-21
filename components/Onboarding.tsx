@@ -66,12 +66,17 @@ export default function Onboarding({ onSuccess }: OnboardingProps) {
     setLoading(true);
     setErrorMsg("");
 
-    const { data: { session } } = await supabase.auth.getSession();
+    // Fetch existing session or create an anonymous session on the fly
+    let { data: { session } } = await supabase.auth.getSession();
 
     if (!session?.user) {
-      setErrorMsg("Session expired. Please re-authenticate.");
-      setLoading(false);
-      return;
+      const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
+      if (anonError || !anonData.session) {
+        setErrorMsg("Could not establish a connection session. Please try again.");
+        setLoading(false);
+        return;
+      }
+      session = anonData.session;
     }
 
     let verificationUrl = null;
