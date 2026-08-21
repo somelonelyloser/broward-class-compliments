@@ -1,5 +1,6 @@
 "use client";
 
+import InstallPWA from "./InstallPWA";
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
