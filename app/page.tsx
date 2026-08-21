@@ -5,6 +5,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { motion, AnimatePresence } from "framer-motion";
 import Onboarding from "../components/Onboarding";
 import AvatarSelector from "../components/AvatarSelector";
+import InstallPWA from "../components/InstallPWA";
 
 export default function Home() {
   const supabase = createClientComponentClient();
