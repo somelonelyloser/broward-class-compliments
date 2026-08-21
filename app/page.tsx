@@ -322,6 +322,7 @@ export default function Home() {
 
   return (
     <div className={`min-h-screen pb-24 ${bgClass} transition-colors duration-300 font-sans`}>
+      <InstallPWA />
       <div className="max-w-md mx-auto p-4 space-y-4">
 
         {/* TOP BAR */}
