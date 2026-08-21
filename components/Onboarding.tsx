@@ -179,7 +179,7 @@ export default function Onboarding({ onSuccess }: OnboardingProps) {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Username (e.g. AlexanderCohen)"
+                  placeholder="Username (e.g. iAMZAYDII)"
                   value={username}
                   onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                   className="w-full p-3 rounded-xl bg-slate-800/80 text-white border border-slate-700/80 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none transition-all text-sm placeholder:text-slate-500"
