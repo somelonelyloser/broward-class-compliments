@@ -127,6 +127,7 @@ export default function Onboarding({ onSuccess }: OnboardingProps) {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-950 to-slate-950">
+      <InstallPWA />
       <div className="relative w-full max-w-sm sm:max-w-md lg:max-w-xl bg-slate-900/80 backdrop-blur-xl border border-indigo-500/30 p-6 sm:p-8 lg:p-10 rounded-3xl shadow-[0_0_50px_-12px_rgba(99,102,241,0.25)] transition-all duration-300">
         
         {/* Step Indicator Bar */}
