@@ -15,7 +15,10 @@ export default function SubmitQuestion() {
     if (!questionText.trim()) return;
 
     setLoading(true);
-    const { data: { session } } = await supabase.auth.getSession();
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       alert("You must be logged in to submit a question.");
@@ -23,17 +26,19 @@ export default function SubmitQuestion() {
       return;
     }
 
-    const { error } = await supabase.from("standard_questions").insert({
+    const { error } = await supabase.from("submitted_questions").insert({
       question_text: questionText.trim(),
-      created_by: session.user.id,
+      submitter_id: session.user.id,
+      status: "pending",
     });
 
     setLoading(false);
 
     if (error) {
-      alert("Failed to submit question. Please try again.");
+      console.error(error);
+      alert("Failed to submit question. Check RLS policies or try again.");
     } else {
-      alert("Question submitted successfully!");
+      alert("Question submitted for review!");
       router.push("/");
     }
   };
@@ -45,6 +50,7 @@ export default function SubmitQuestion() {
           <h1 className="text-lg font-black text-cyan-400">Submit a Question</h1>
           <button
             onClick={() => router.back()}
+            type="button"
             className="text-xs font-bold text-slate-400 hover:text-white"
           >
             Cancel
@@ -64,7 +70,7 @@ export default function SubmitQuestion() {
               maxLength={120}
               required
             />
-            <span className="text-[10px] text-slate-500 float-right">
+            <span className="text-[10px] text-slate-500 float-right mt-1">
               {120 - questionText.length} characters left
             </span>
           </div>
@@ -72,7 +78,7 @@ export default function SubmitQuestion() {
           <button
             type="submit"
             disabled={loading || !questionText.trim()}
-            className="w-full py-3 bg-gradient-to-r from-cyan-500 to-pink-500 rounded-xl font-extrabold text-sm text-white shadow-lg disabled:opacity-50 transition"
+            className="w-full py-3 bg-gradient-to-r from-cyan-500 to-pink-500 rounded-xl font-extrabold text-sm text-white shadow-lg disabled:opacity-50 transition hover:opacity-90"
           >
             {loading ? "Submitting..." : "Submit for Review"}
           </button>
