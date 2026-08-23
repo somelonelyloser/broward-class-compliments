@@ -7,6 +7,7 @@ import Link from "next/link";
 import Onboarding from "../components/Onboarding";
 import AvatarSelector from "../components/AvatarSelector";
 import InstallPWA from "../components/InstallPWA";
+import AnnouncementBanner from "../components/AnnouncementBanner"; // 👈 1. IMPORT BANNER
 
 export default function Home() {
   const supabase = createClientComponentClient();
@@ -330,6 +331,9 @@ export default function Home() {
             {/* INBOX SUB-TAB */}
             {feedTab === "inbox" && (
               <div className="space-y-3">
+                {/* 📢 2. ANNOUNCEMENT BANNER PINNED TO TOP OF INBOX */}
+                <AnnouncementBanner />
+
                 {myInbox.length === 0 ? (
                   <div className={`p-8 text-center rounded-2xl border ${cardBg} text-slate-400 text-xs`}>
                     No votes received yet. Play more polls to get noticed!
