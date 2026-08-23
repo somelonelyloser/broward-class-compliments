@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,10 +7,19 @@ import { useRouter } from "next/navigation";
 export default function UserSettings() {
   const supabase = createClientComponentClient();
   const router = useRouter();
-  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [inAppNotifications, setInAppNotifications] = useState(true);
+  const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
+
+  // Apply or remove the 'dark' class on <html>
+  const applyTheme = (mode: "light" | "dark") => {
+    if (mode === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
 
   useEffect(() => {
     async function fetchSettings() {
@@ -29,17 +37,32 @@ export default function UserSettings() {
 
       if (error) {
         console.error("Error fetching user settings:", error);
-        // If no settings exist, create default ones
-        await supabase.from("user_settings").insert({ user_id: user.id });
+        await supabase.from("user_settings").insert({ 
+          user_id: user.id,
+          theme_mode: "light" 
+        });
+        applyTheme("light");
       } else if (settings) {
-        setPushNotifications(settings.push_notifications);
-        setInAppNotifications(settings.in_app_notifications);
+        setPushNotifications(settings.push_notifications ?? true);
+        setInAppNotifications(settings.in_app_notifications ?? true);
+        
+        const savedTheme = settings.theme_mode || "light";
+        setThemeMode(savedTheme);
+        applyTheme(savedTheme);
+        localStorage.setItem("kudo-theme", savedTheme);
       }
       setLoading(false);
     }
 
     fetchSettings();
   }, [supabase, router]);
+
+  const handleThemeToggle = () => {
+    const nextTheme = themeMode === "light" ? "dark" : "light";
+    setThemeMode(nextTheme);
+    applyTheme(nextTheme);
+    localStorage.setItem("kudo-theme", nextTheme);
+  };
 
   const handleSaveSettings = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -50,25 +73,52 @@ export default function UserSettings() {
       .update({
         push_notifications: pushNotifications,
         in_app_notifications: inAppNotifications,
+        theme_mode: themeMode,
       })
       .eq("user_id", user.id);
 
     if (error) {
       console.error("Error updating settings:", error);
+      alert("Failed to update settings.");
     } else {
       alert("Settings updated successfully!");
     }
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)] color-[var(--foreground)]">
+        Loading...
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
+    <div className="min-h-screen p-8 transition-colors duration-300">
       <h1 className="text-3xl font-bold mb-8">User Settings</h1>
 
-      <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
+      {/* Appearance Section */}
+      <div className="backdrop-blur-glass p-6 rounded-xl shadow-lg mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Appearance</h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-medium">App Theme Mode</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {themeMode === "light" ? "Currently using Bright Mode" : "Currently using Dark Mode"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleThemeToggle}
+            className="px-4 py-2 font-semibold text-sm rounded-lg bg-gradient-to-r from-cyan-500 to-pink-500 text-white shadow hover:opacity-90 transition-all"
+          >
+            Switch to {themeMode === "light" ? "Dark Mode" : "Bright Mode"}
+          </button>
+        </div>
+      </div>
+
+      {/* Notifications Section */}
+      <div className="backdrop-blur-glass p-6 rounded-xl shadow-lg mb-8">
         <h2 className="text-2xl font-semibold mb-4">Notifications</h2>
 
         <div className="flex items-center justify-between mb-4">
@@ -80,8 +130,8 @@ export default function UserSettings() {
               checked={pushNotifications}
               onChange={() => setPushNotifications(!pushNotifications)}
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            <span className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            <span className="ml-3 text-sm font-medium">
               {pushNotifications ? "Enabled" : "Disabled"}
             </span>
           </label>
@@ -96,8 +146,8 @@ export default function UserSettings() {
               checked={inAppNotifications}
               onChange={() => setInAppNotifications(!inAppNotifications)}
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            <span className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            <span className="ml-3 text-sm font-medium">
               {inAppNotifications ? "Enabled" : "Disabled"}
             </span>
           </label>
@@ -105,7 +155,7 @@ export default function UserSettings() {
 
         <button
           onClick={handleSaveSettings}
-          className="mt-6 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+          className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-all"
         >
           Save Settings
         </button>
