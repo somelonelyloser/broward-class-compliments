@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import Onboarding from "../components/Onboarding";
 import AvatarSelector from "../components/AvatarSelector";
 import InstallPWA from "../components/InstallPWA";
@@ -41,7 +42,6 @@ export default function Home() {
   const [showNominateModal, setShowNominateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showTargetBoostModal, setShowTargetBoostModal] = useState(false);
-  const [submitQText, setSubmitQText] = useState("");
   const [feedbackText, setFeedbackText] = useState("");
 
   useEffect(() => {
@@ -107,7 +107,6 @@ export default function Home() {
   };
 
   const loadFeedData = async (currentUserId: string) => {
-    // Inbox
     const { data: inbox } = await supabase
       .from("standard_votes")
       .select("*, voter:profiles!standard_votes_voter_id_fkey(*), question:standard_questions(*)")
@@ -116,7 +115,6 @@ export default function Home() {
 
     if (inbox) setMyInbox(inbox);
 
-    // School Activity
     const { data: activity } = await supabase
       .from("standard_votes")
       .select("*, voter:profiles!standard_votes_voter_id_fkey(*), question:standard_questions(*)")
@@ -125,7 +123,6 @@ export default function Home() {
 
     if (activity) setSchoolActivity(activity);
 
-    // Aura Leaderboard
     const { data: leaders } = await supabase
       .from("profiles")
       .select("*")
@@ -134,7 +131,6 @@ export default function Home() {
 
     if (leaders) setAuraLeaderboard(leaders);
 
-    // Hints
     const { data: hints } = await supabase
       .from("revealed_hints")
       .select("*")
@@ -154,7 +150,7 @@ export default function Home() {
   };
 
   const handleVote = async (targetId: string) => {
-    const pointsPerQ = Math.round(250 / 15); // ~17 aura per question
+    const pointsPerQ = Math.round(250 / 15);
 
     await supabase.from("standard_votes").insert({
       voter_id: profile.id,
@@ -163,7 +159,6 @@ export default function Home() {
       question_id: questions[currentQIndex].id,
     });
 
-    // Update target vote count
     const targetUser = allStudents.find((s) => s.id === targetId);
     if (targetUser) {
       await supabase
@@ -268,16 +263,6 @@ export default function Home() {
     alert(`Targeted boost active for ${targetStudent.first_name}! You'll appear in 3 of their polls.`);
   };
 
-  const handleSubmitQuestion = async () => {
-    if (!submitQText.trim()) return;
-    await supabase.from("submitted_questions").insert({
-      submitter_id: profile.id,
-      question_text: submitQText,
-    });
-    setSubmitQText("");
-    alert("Question submitted for review!");
-  };
-
   const handleLeaveFeedback = async () => {
     if (!feedbackText.trim()) return;
     await supabase.from("feedback").insert({
@@ -294,6 +279,17 @@ export default function Home() {
     if (grade?.includes("11") || grade?.toLowerCase().includes("junior")) return "C/O 2027";
     if (grade?.includes("12") || grade?.toLowerCase().includes("senior")) return "C/O 2026";
     return "High School";
+  };
+
+  const timeAgo = (dateISO: string) => {
+    if (!dateISO) return "";
+    const seconds = Math.floor((new Date().getTime() - new Date(dateISO).getTime()) / 1000);
+    if (seconds < 60) return "Just now";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
   };
 
   const formatSeconds = (sec: number) => {
@@ -314,7 +310,6 @@ export default function Home() {
     return <Onboarding />;
   }
 
-  // Theme Colors
   const isDark = theme === "dark";
   const bgClass = isDark ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-900";
   const cardBg = isDark ? "bg-slate-900/90 border-slate-800" : "bg-white border-slate-200 shadow-sm";
@@ -391,6 +386,9 @@ export default function Home() {
                       <div key={item.id} className={`p-4 rounded-2xl border space-y-3 ${cardBg}`}>
                         <div className="flex justify-between items-start">
                           <div>
+                            <span className="text-[10px] font-bold text-slate-400 block mb-0.5">
+                              {timeAgo(item.created_at)}
+                            </span>
                             <span className="text-xs font-extrabold text-indigo-400 uppercase tracking-wide">You Got Voted!</span>
                             <h3 className="font-extrabold text-base mt-0.5">"{item.question?.question_text}"</h3>
                           </div>
@@ -424,11 +422,26 @@ export default function Home() {
             {/* SCHOOL SUB-TAB */}
             {feedTab === "school" && (
               <div className="space-y-3">
+                {/* Header Link for Submitting Questions */}
+                <div className="flex justify-between items-center px-1">
+                  <span className="text-xs font-bold text-slate-400 uppercase">Recent Activity</span>
+                  <Link
+                    href="/submit-question"
+                    className="px-3 py-1.5 text-xs font-extrabold rounded-full bg-gradient-to-r from-cyan-500 to-pink-500 text-white shadow hover:opacity-90 transition-all flex items-center gap-1"
+                  >
+                    <span>+</span> Submit Question
+                  </Link>
+                </div>
+
                 {schoolActivity.map((item) => (
                   <div key={item.id} className={`p-4 rounded-2xl border space-y-2 ${cardBg}`}>
+                    <div className="flex justify-between items-center text-xs text-slate-400">
+                      <span>Someone voted for a classmate</span>
+                      <span className="text-[10px]">{timeAgo(item.created_at)}</span>
+                    </div>
                     <p className="font-bold text-sm">"{item.question?.question_text}"</p>
                     <p className="text-xs text-slate-400">
-                      Someone voted for a classmate • {item.voter_gender === "girl" ? "👧 Girl" : "👦 Boy"} from {getGraduationClass(item.voter?.grade)}
+                      • {item.voter_gender === "girl" ? "👧 Girl" : "👦 Boy"} from {getGraduationClass(item.voter?.grade)}
                     </p>
                   </div>
                 ))}
@@ -485,7 +498,6 @@ export default function Home() {
                     "{questions[currentQIndex]?.question_text}"
                   </h2>
 
-                  {/* 4 Voting Options */}
                   <div className="grid grid-cols-2 gap-3">
                     {options.map((option) => (
                       <motion.button
@@ -565,24 +577,7 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* SUBMIT QUESTION */}
-              <div className="space-y-2 pt-2">
-                <h3 className="text-xs font-extrabold uppercase text-slate-400">Submit a Question</h3>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Type a funny high school question..."
-                    value={submitQText}
-                    onChange={(e) => setSubmitQText(e.target.value)}
-                    className={`flex-1 p-2.5 rounded-xl border text-xs ${innerCardBg}`}
-                  />
-                  <button onClick={handleSubmitQuestion} className="px-4 py-2.5 bg-indigo-600 rounded-xl text-xs font-bold text-white">
-                    Send
-                  </button>
-                </div>
-              </div>
-
-              {/* FEEDBACK & THEME */}
+              {/* FEEDBACK */}
               <div className="space-y-2 pt-2 border-t border-slate-800">
                 <h3 className="text-xs font-extrabold uppercase text-slate-400">App Feedback</h3>
                 <div className="flex gap-2">
