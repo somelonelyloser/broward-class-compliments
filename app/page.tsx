@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { RealtimeChannel } from "@supabase/supabase-js";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Onboarding from "../components/Onboarding";
@@ -56,6 +57,48 @@ export default function Home() {
   useEffect(() => {
     loadUserData();
   }, [supabase]);
+
+  // Realtime subscription for incoming votes
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const voteChannel: RealtimeChannel = supabase
+      .channel("realtime_votes")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "standard_votes",
+          filter: `target_id=eq.${profile.id}`,
+        },
+        async (payload) => {
+          playSound("boost");
+
+          const { data: newVote } = await supabase
+            .from("standard_votes")
+            .select("*, voter:profiles!standard_votes_voter_id_fkey(*), question:standard_questions(*)")
+            .eq("id", payload.new.id)
+            .single();
+
+          if (newVote) {
+            setMyInbox((prev) => [newVote, ...prev]);
+
+            if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+              new Notification("You got a new vote! 💖", {
+                body: `Someone voted for you in "${newVote.question?.question_text}"`,
+                icon: "/favicon.ico",
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(voteChannel);
+    };
+  }, [profile?.id, supabase]);
 
   const loadUserData = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -159,7 +202,6 @@ export default function Home() {
   };
 
   const handleVote = async (targetId: string) => {
-    // Sound & Haptic Feedback on vote
     playSound("vote");
 
     const pointsPerQ = Math.round(250 / 15);
@@ -196,8 +238,6 @@ export default function Home() {
 
       setProfile({ ...profile, last_set_completed_at: nowISO });
       checkCooldown(nowISO);
-      
-      // Trigger streak milestone popup upon set completion
       setIsStreakOpen(true);
     }
   };
@@ -235,7 +275,6 @@ export default function Home() {
     setProfile({ ...profile, aura: newAura });
     setRevealedLetters({ ...revealedLetters, [voteItem.id]: firstLetter });
 
-    // Open Reveal Modal with animation
     setSelectedVoter({
       hint: `Name starts with "${firstLetter}"`,
       grade: `${voteItem.voter?.grade || "Classmate"} • ${getGraduationClass(voteItem.voter?.grade)}`,
