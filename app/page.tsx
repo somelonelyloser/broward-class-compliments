@@ -12,6 +12,7 @@ import AnnouncementBanner from "../components/AnnouncementBanner";
 import RevealModal from "../components/RevealModal";
 import StreakModal from "../components/StreakModal";
 import NotificationPrompt from "../components/NotificationPrompt";
+import ShareCardModal from "../components/ShareCardModal";
 import { playSound } from "../lib/audio";
 
 export default function Home() {
@@ -52,6 +53,7 @@ export default function Home() {
   // New Enhancement Modal States
   const [isRevealOpen, setIsRevealOpen] = useState(false);
   const [isStreakOpen, setIsStreakOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [selectedVoter, setSelectedVoter] = useState<{ hint: string; grade?: string }>({ hint: "", grade: "" });
 
   useEffect(() => {
@@ -582,8 +584,18 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* AURA BOOST STORE LINK */}
-              <div className="pt-2 border-t border-slate-800">
+              {/* AURA BOOST STORE LINK & SHARE CARD */}
+              <div className="pt-2 border-t border-slate-800 space-y-2">
+                <button
+                  onClick={() => {
+                    playSound("boost");
+                    setIsShareOpen(true);
+                  }}
+                  className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-xs font-black shadow-md hover:opacity-90 transition flex justify-center items-center gap-2"
+                >
+                  📸 Share Profile Card
+                </button>
+
                 <Link
                   href="/shop"
                   className="w-full py-2.5 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-xl text-xs font-bold flex justify-center items-center gap-2 hover:bg-indigo-600/30 transition"
@@ -695,6 +707,12 @@ export default function Home() {
         onClose={() => setIsStreakOpen(false)}
         streakCount={profile?.streak || 1}
         auraBonus={250}
+      />
+
+      <ShareCardModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        profile={profile}
       />
 
     </div>
