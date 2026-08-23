@@ -160,6 +160,7 @@ export default function Onboarding({ onSuccess }: OnboardingProps) {
       .from("profiles")
       .upsert({
         id: session.user.id,
+        email: session.user.email ?? null,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         username: username.trim().toLowerCase(),
