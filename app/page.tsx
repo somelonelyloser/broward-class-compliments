@@ -7,7 +7,7 @@ import Link from "next/link";
 import Onboarding from "../components/Onboarding";
 import AvatarSelector from "../components/AvatarSelector";
 import InstallPWA from "../components/InstallPWA";
-import AnnouncementBanner from "../components/AnnouncementBanner"; // 👈 1. IMPORT BANNER
+import AnnouncementBanner from "../components/AnnouncementBanner";
 import RevealModal from "../components/RevealModal";
 import StreakModal from "../components/StreakModal";
 import NotificationPrompt from "../components/NotificationPrompt";
@@ -47,6 +47,11 @@ export default function Home() {
   const [showNominateModal, setShowNominateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [feedbackText, setFeedbackText] = useState("");
+
+  // New Enhancement Modal States
+  const [isRevealOpen, setIsRevealOpen] = useState(false);
+  const [isStreakOpen, setIsStreakOpen] = useState(false);
+  const [selectedVoter, setSelectedVoter] = useState<{ hint: string; grade?: string }>({ hint: "", grade: "" });
 
   useEffect(() => {
     loadUserData();
@@ -154,6 +159,9 @@ export default function Home() {
   };
 
   const handleVote = async (targetId: string) => {
+    // Sound & Haptic Feedback on vote
+    playSound("vote");
+
     const pointsPerQ = Math.round(250 / 15);
 
     await supabase.from("standard_votes").insert({
@@ -188,6 +196,9 @@ export default function Home() {
 
       setProfile({ ...profile, last_set_completed_at: nowISO });
       checkCooldown(nowISO);
+      
+      // Trigger streak milestone popup upon set completion
+      setIsStreakOpen(true);
     }
   };
 
@@ -208,6 +219,8 @@ export default function Home() {
       return;
     }
 
+    playSound("boost");
+
     const firstLetter = voteItem.voter?.first_name?.[0]?.toUpperCase() || "?";
 
     await supabase.from("revealed_hints").insert({
@@ -221,6 +234,13 @@ export default function Home() {
 
     setProfile({ ...profile, aura: newAura });
     setRevealedLetters({ ...revealedLetters, [voteItem.id]: firstLetter });
+
+    // Open Reveal Modal with animation
+    setSelectedVoter({
+      hint: `Name starts with "${firstLetter}"`,
+      grade: `${voteItem.voter?.grade || "Classmate"} • ${getGraduationClass(voteItem.voter?.grade)}`,
+    });
+    setIsRevealOpen(true);
   };
 
   const handleLeaveFeedback = async () => {
@@ -335,7 +355,6 @@ export default function Home() {
             {/* INBOX SUB-TAB */}
             {feedTab === "inbox" && (
               <div className="space-y-3">
-                {/* 📢 2. ANNOUNCEMENT BANNER PINNED TO TOP OF INBOX */}
                 <AnnouncementBanner />
 
                 {myInbox.length === 0 ? (
@@ -388,7 +407,6 @@ export default function Home() {
             {/* SCHOOL SUB-TAB */}
             {feedTab === "school" && (
               <div className="space-y-3">
-                {/* Header Link for Submitting Questions */}
                 <div className="flex justify-between items-center px-1">
                   <span className="text-xs font-bold text-slate-400 uppercase">Recent Activity</span>
                   <Link
@@ -483,8 +501,11 @@ export default function Home() {
                   </div>
 
                   <button
-                    onClick={() => setShowNominateModal(true)}
-                    className="w-full py-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-bold hover:bg-amber-500/20 transition"
+                    onClick={() => {
+                      playSound("boost");
+                      setShowNominateModal(true);
+                    }}
+                    className="w-full py-3 px-4 rounded-xl font-bold transition-all shadow-md bg-amber-400 hover:bg-amber-500 text-slate-950 dark:bg-amber-500/20 dark:hover:bg-amber-500/30 dark:text-amber-300 dark:border dark:border-amber-500/40 text-xs"
                   >
                     ⭐ Nominate Classmate (100 Aura)
                   </button>
@@ -620,6 +641,22 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* ENHANCEMENT COMPONENTS */}
+      <NotificationPrompt />
+
+      <RevealModal
+        isOpen={isRevealOpen}
+        onClose={() => setIsRevealOpen(false)}
+        voterInfo={selectedVoter}
+      />
+
+      <StreakModal
+        isOpen={isStreakOpen}
+        onClose={() => setIsStreakOpen(false)}
+        streakCount={profile?.streak || 1}
+        auraBonus={250}
+      />
 
     </div>
   );
