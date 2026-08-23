@@ -8,7 +8,6 @@ import Onboarding from "../components/Onboarding";
 import AvatarSelector from "../components/AvatarSelector";
 import InstallPWA from "../components/InstallPWA";
 import AnnouncementBanner from "../components/AnnouncementBanner"; // 👈 1. IMPORT BANNER
-import AnnouncementBanner from "../components/AnnouncementBanner";
 import RevealModal from "../components/RevealModal";
 import StreakModal from "../components/StreakModal";
 import NotificationPrompt from "../components/NotificationPrompt";
