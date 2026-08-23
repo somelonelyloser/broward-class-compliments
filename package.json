@@ -19,6 +19,7 @@
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "canvas-confetti": "^1.9.4"
+    "html-to-image": "^1.11.11"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",
