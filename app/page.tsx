@@ -292,9 +292,12 @@ export default function Home() {
             >
               {isDark ? "☀️ Light" : "🌙 Dark"}
             </button>
-            <div className="bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-xl flex items-center gap-1 text-xs font-black text-amber-400">
+            <Link
+              href="/shop"
+              className="bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-xl flex items-center gap-1 text-xs font-black text-amber-400 hover:bg-amber-500/20 transition"
+            >
               ⚡ {profile.aura || 0}
-            </div>
+            </Link>
           </div>
         </div>
 
@@ -509,6 +512,16 @@ export default function Home() {
                   <p className="text-[10px] text-slate-400 font-bold uppercase">Aura Balance</p>
                   <p className="text-xl font-black text-amber-400">⚡ {profile.aura || 0}</p>
                 </div>
+              </div>
+
+              {/* AURA BOOST STORE LINK */}
+              <div className="pt-2 border-t border-slate-800">
+                <Link
+                  href="/shop"
+                  className="w-full py-2.5 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-xl text-xs font-bold flex justify-center items-center gap-2 hover:bg-indigo-600/30 transition"
+                >
+                  🛒 Open Aura Boost Store
+                </Link>
               </div>
 
               {/* FEEDBACK */}
