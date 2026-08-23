@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../lib/context';
-import { Award, Trophy, Star, Filter, Landmark, Sparkles } from 'lucide-react';
+import { Award, Trophy, Star, Filter, Landmark, Sparkles, Vote, Flame } from 'lucide-react';
 
 export default function Leaderboard() {
   const { currentUser, getLeaderboard, schools } = useApp();
@@ -24,6 +24,11 @@ export default function Leaderboard() {
         return [];
     }
   }, [scope, selectedGrade, currentUser.school_id, getLeaderboard]);
+
+  // Calculate aggregate stats for this week's active scope
+  const totalWeeklyVotes = useMemo(() => {
+    return leaderboardData.reduce((sum, item) => sum + (item.compliment_count || 0), 0);
+  }, [leaderboardData]);
 
   const mySchoolName = schools.find(s => s.id === currentUser.school_id)?.name || 'My School';
 
@@ -121,6 +126,26 @@ export default function Leaderboard() {
           </div>
         </div>
       )}
+
+      {/* Weekly Stats Counter Card */}
+      <div className="bg-gradient-to-r from-indigo-900/40 via-purple-900/40 to-slate-900/60 border border-indigo-500/30 rounded-3xl p-5 backdrop-blur-xl shadow-xl flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-400">
+            <Vote className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-indigo-300 uppercase tracking-wider">Weekly Activity</p>
+            <h3 className="text-lg font-bold text-white">Total Votes This Week</h3>
+          </div>
+        </div>
+        <div className="text-right">
+          <span className="text-2xl font-black text-cyan-400 flex items-center justify-end gap-1">
+            <Flame className="w-5 h-5 text-amber-400 fill-amber-400" />
+            {totalWeeklyVotes.toLocaleString()}
+          </span>
+          <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Votes Cast</span>
+        </div>
+      </div>
 
       {/* Leaderboard Rankings */}
       <div className="bg-card backdrop-blur-glass border border-white/10 rounded-3xl p-5 shadow-glass space-y-4">
