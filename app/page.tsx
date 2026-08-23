@@ -41,7 +41,6 @@ export default function Home() {
   // Modals & Inputs
   const [showNominateModal, setShowNominateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showTargetBoostModal, setShowTargetBoostModal] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
 
   useEffect(() => {
@@ -217,50 +216,6 @@ export default function Home() {
 
     setProfile({ ...profile, aura: newAura });
     setRevealedLetters({ ...revealedLetters, [voteItem.id]: firstLetter });
-  };
-
-  const handleBuyPfpBoost = async () => {
-    if ((profile.aura || 0) < 2000) {
-      alert("You need 2,000 Aura for a PFP Boost!");
-      return;
-    }
-
-    const threeDaysLater = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
-    await supabase
-      .from("profiles")
-      .update({
-        aura: profile.aura - 2000,
-        pfp_boost_until: threeDaysLater,
-        pfp_boost_votes_left: 10,
-      })
-      .eq("id", profile.id);
-
-    setProfile({
-      ...profile,
-      aura: profile.aura - 2000,
-      pfp_boost_until: threeDaysLater,
-      pfp_boost_votes_left: 10,
-    });
-    alert("PFP Boost activated for 3 days or 10 votes!");
-  };
-
-  const handleTargetedBoost = async (targetStudent: any) => {
-    if ((profile.aura || 0) < 1500) {
-      alert("You need 1,500 Aura for a Targeted Boost!");
-      return;
-    }
-
-    await supabase.from("targeted_boosts").insert({
-      booster_id: profile.id,
-      target_id: targetStudent.id,
-      questions_remaining: 3,
-    });
-
-    const newAura = profile.aura - 1500;
-    await supabase.from("profiles").update({ aura: newAura }).eq("id", profile.id);
-    setProfile({ ...profile, aura: newAura });
-    setShowTargetBoostModal(false);
-    alert(`Targeted boost active for ${targetStudent.first_name}! You'll appear in 3 of their polls.`);
   };
 
   const handleLeaveFeedback = async () => {
@@ -556,27 +511,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* BOOST STORE */}
-              <div className="space-y-2 pt-2">
-                <h3 className="text-xs font-extrabold uppercase text-slate-400">Aura Boost Store</h3>
-                
-                <button
-                  onClick={handleBuyPfpBoost}
-                  className="w-full p-3 rounded-2xl border border-indigo-500/40 bg-indigo-600/20 hover:bg-indigo-600/30 flex justify-between items-center text-xs font-bold transition"
-                >
-                  <span>🚀 PFP Boost (Top of Classmate Polls)</span>
-                  <span className="text-amber-400">2000 Aura</span>
-                </button>
-
-                <button
-                  onClick={() => setShowTargetBoostModal(true)}
-                  className="w-full p-3 rounded-2xl border border-pink-500/40 bg-pink-600/20 hover:bg-pink-600/30 flex justify-between items-center text-xs font-bold transition"
-                >
-                  <span>🎯 Targeted Boost (Appear in Specific Friend's Poll)</span>
-                  <span className="text-amber-400">1500 Aura</span>
-                </button>
-              </div>
-
               {/* FEEDBACK */}
               <div className="space-y-2 pt-2 border-t border-slate-800">
                 <h3 className="text-xs font-extrabold uppercase text-slate-400">App Feedback</h3>
@@ -629,31 +563,6 @@ export default function Home() {
           <span className="text-[10px]">Profile</span>
         </button>
       </nav>
-
-      {/* TARGETED BOOST MODAL */}
-      {showTargetBoostModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className={`p-6 rounded-3xl w-full max-w-md space-y-4 border ${cardBg}`}>
-            <div className="flex justify-between items-center">
-              <h3 className="font-extrabold text-sm text-pink-400">🎯 Targeted Boost (1500 Aura)</h3>
-              <button onClick={() => setShowTargetBoostModal(false)} className="text-slate-400">✕</button>
-            </div>
-            <p className="text-xs text-slate-400">Select a classmate to force yourself into 3 of their upcoming poll questions!</p>
-            <div className="max-h-60 overflow-y-auto space-y-2">
-              {allStudents.filter((s) => s.id !== profile.id).map((s) => (
-                <div
-                  key={s.id}
-                  onClick={() => handleTargetedBoost(s)}
-                  className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer ${innerCardBg}`}
-                >
-                  <span className="font-bold text-xs">{s.first_name} {s.last_name}</span>
-                  <span className="text-[10px] bg-pink-500/20 text-pink-400 px-2 py-1 rounded-md font-bold">Boost Here</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* NOMINATE MODAL */}
       {showNominateModal && (
