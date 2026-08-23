@@ -28,14 +28,14 @@ export default function AnnouncementBanner() {
   if (!announcement || !visible) return null;
 
   return (
-    <div className="w-full max-w-xl mx-auto my-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 text-amber-300 text-sm font-bold flex items-center justify-between shadow-lg backdrop-blur-md">
+    <div className="w-full max-w-xl mx-auto my-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-amber-950 dark:text-amber-300 text-sm font-bold flex items-center justify-between shadow-lg backdrop-blur-md transition-colors">
       <div className="flex items-center space-x-3">
         <span className="text-base">📢</span>
-        <p>{announcement}</p>
+        <p className="leading-snug">{announcement}</p>
       </div>
       <button
         onClick={() => setVisible(false)}
-        className="text-amber-400 hover:text-white text-xs font-bold px-2 py-1 transition"
+        className="text-amber-800 hover:text-amber-950 dark:text-amber-400 dark:hover:text-white text-xs font-bold px-2 py-1 transition"
       >
         ✕
       </button>
